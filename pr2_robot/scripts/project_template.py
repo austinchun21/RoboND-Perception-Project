@@ -67,6 +67,8 @@ def pcl_callback(pcl_msg):
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_filtered = vox.filter()
 
+    voxel_cloud = cloud_filtered
+
   ### PassThrough Filter
     # Create a PassThrough filter object.
     passthroughz = cloud_filtered.make_passthrough_filter()
@@ -87,6 +89,8 @@ def pcl_callback(pcl_msg):
     passthroughy.set_filter_limits(axis_min, axis_max)
     cloud_filtered = passthroughy.filter()
   
+    passthrough_cloud = cloud_filtered
+
   ### Outlier Removal Filter
     # Much like the previous filters, we start by creating a filter object: 
     outlier_filter = cloud_filtered.make_statistical_outlier_filter()
@@ -159,7 +163,8 @@ def pcl_callback(pcl_msg):
     pcl_objects_pub.publish(ros_cloud_objects)
     pcl_table_pub.publish(ros_cloud_table)
     pcl_clusters_pub.publish(ros_cluster_cloud)
-
+    voxel_pub.publish(pcl_to_ros(voxel_cloud))
+    passthrough_pub.publish(pcl_to_ros(passthrough_cloud))
 
 # Exercise-3 TODOs: 
 
@@ -344,6 +349,9 @@ if __name__ == '__main__':
     pcl_table_pub = rospy.Publisher("/pcl_table", PointCloud2, queue_size=1)
     pcl_clusters_pub = rospy.Publisher("/pcl_clusters", PointCloud2, queue_size=1)
     pcl_cloud_filt_pub = rospy.Publisher("/pcl_cloud_filt", PointCloud2, queue_size=1)
+    pcl_cloud_filt_pub = rospy.Publisher("/pcl_cloud_filt", PointCloud2, queue_size=1)
+    voxel_pub = rospy.Publisher("/voxel", PointCloud2, queue_size=1)
+    passthrough_pub = rospy.Publisher("/passthrough", PointCloud2, queue_size=1)
 
     # Create Publishers
     object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)

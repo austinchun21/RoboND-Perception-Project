@@ -10,18 +10,11 @@
 [Outlier]: ./writeup_images/Outlier.png
 [Table]: ./writeup_images/Table.png
 [Objects]: ./writeup_images/Objects.png
-
-
-# Required Steps for a Passing Submission:
-1. Extract features and train an SVM model on new objects (see `pick_list_*.yaml` in `/pr2_robot/config/` for the list of models you'll be trying to identify). 
-2. Write a ROS node and subscribe to `/pr2/world/points` topic. This topic contains noisy point cloud data that you must work with.
-3. Use filtering and RANSAC plane fitting to isolate the objects of interest from the rest of the scene.
-4. Apply Euclidean clustering to create separate clusters for individual items.
-5. Perform object recognition on these objects and assign them labels (markers in RViz).
-6. Calculate the centroid (average in x, y and z) of the set of points belonging to that each object.
-7. Create ROS messages containing the details of each object (name, pick_pose, etc.) and write these messages out to `.yaml` files, one for each of the 3 scenarios (`test1-3.world` in `/pr2_robot/worlds/`).  [See the example `output.yaml` for details on what the output should look like.](https://github.com/udacity/RoboND-Perception-Project/blob/master/pr2_robot/config/output.yaml)  
-8. Submit a link to your GitHub repo for the project or the Python code for your perception pipeline and your output `.yaml` files (3 `.yaml` files, one for each test world).  You must have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, 80% of items from `pick_list_2.yaml` for `test2.world` and 75% of items from `pick_list_3.yaml` in `test3.world`.
-9. Congratulations!  Your Done!
+[Clusters]: ./writeup_images/Clusters.png
+[Confusion]: ./writeup_images/Confusion.png
+[Detection1]: ./writeup_images/Detection1.png
+[Detection2]: ./writeup_images/Detection2.png
+[Detection3]: ./writeup_images/Detection3.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/1067/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -44,30 +37,45 @@ As instructed in Exercise 1, the filtering pipeline is setup as follows:
 5. RANSAC Plane Segmentation
 
 For the Voxel Grid Downsampling (lines 60-68), I used a LEAF_SIZE = 0.005. I decided to use two passthrough filters (lines 70-88), one for Z as normal, but also one for y (left-right view from camera) to eliminate corners of the bins. Then the outlier removal filter (lines 90-100) gets rid of noise (looked at 25 neighbors, and threshold scale factor as 0.3). Lastly, RANSAC Plane Segmentation (lines 103-117) separates the table and the objects on the table.
-
+<p style="text-align: center;"> **Input Cloud** </p>
 ![Input][Input]
+<p style="text-align: center;"> **Voxel Downsampling** </p>
 ![Voxel][Voxel]
+<p style="text-align: center;"> **PassThrough Filter (Z and Y)** </p>
 ![Passthrough][Passthrough]
+<p style="text-align: center;"> **Outlier Removal Filter** </p>
 ![Outlier][Outlier]
+<p style="text-align: center;"> **Extracted Table (RANSAC)** </p>
 ![Table][Table]
+<p style="text-align: center;"> **Extracted Objects (RANSAC)** </p>
 ![Objects][Objects]
 
 
 #### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
+With the objects extracted from the scene, the objects point cloud can be clustered, in this case using Euclidian clustering. I used a ClusterTolerance = 0.05, with ClusterSize between 50 and 3000. Below is an image of the clustering for World3.
 
-#### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
-Here is an example of how to include an image in your writeup.
+![Clusters][Clusters]
 
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
+
+#### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
+For the feature extraction, I filled in `computer_color_histograms()` and `computer_normal_histograms()` in `features.py` using bins=16 (I decreased the bin size to speed up the training data capturing process). I also increased the number of random positions to 100 positions for each object (`capture_features.py` line 57). As for training the SVM, I used the provided code, but didn't change any parameters, since the default worked well. The resulting confusion matrices are shown below.
+
+![Confusion][Confusion]
+
+The object prediction code is added to `project_template.py`. The resulting object detection is shown below for Worlds 1, 2, and 3.
+
+![Detection1][Detection1]
+![Detection2][Detection2]
+![Detection3][Detection3]
+
+The object detection works for 3/3 objects in World 1, 4/5 objects in World 2, and 7/8 objects in world 3. Consistently, the glue is mislabeled as biscuits... which is confusing, but it works well enough.
 
 ### Pick and Place Setup
 
 #### 1. For all three tabletop setups (`test*.world`), perform object recognition, then read in respective pick list (`pick_list_*.yaml`). Next construct the messages that would comprise a valid `PickPlace` request output them to `.yaml` format.
 
-And here's another image! 
-![demo-2](https://user-images.githubusercontent.com/20687560/28748286-9f65680e-7468-11e7-83dc-f1a32380b89c.png)
+In `project_template.py`, the function `pr2_mover()` (lines 219 - 335) read in the pick-list, and construct the appropriate request output. Ad mentioned in the previous section, the only issue with the object detection is with glue (it gets misclassified as biscuits in World 2 and 3).
 
-Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
+Some other changes I made include adding a centroid error check using ground truth centroid positions (extracted from the `.world` files, and formatted into `ob_locations_*.yaml` under `pr2_robot/config/`). Also, if there are multiple classifications for a single object, the code returns the object that has the most points in its point cloud (a simple heuristic to try avoid misclassification due to small cluster sizes).
 
-
-
+It would be great to complete the cycle, and implement the pick and place actions, but for now I need to get onto Project 4. Other improvements could include speed performance (maybe smaller Voxel sizes, or only execute expensive calculations periodically), or improving the model by editing the training data generation to produce 'occluded' versions of the objects, to train the SVM on partial images. 
