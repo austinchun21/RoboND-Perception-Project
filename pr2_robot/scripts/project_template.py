@@ -46,6 +46,10 @@ def send_to_yaml(yaml_filename, dict_list):
     with open(yaml_filename, 'w') as outfile:
         yaml.dump(data_dict, outfile, default_flow_style=False)
 
+# Helper function to calculate euclidian distance error of centroid estimate and truth
+def calc_centroid_err(est, true):
+    return np.sqrt((est[0]-true[0])**2 + (est[1]-true[1])**2 + (est[2]-true[2])**2)
+
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
 
@@ -209,13 +213,15 @@ def pcl_callback(pcl_msg):
 # function to load parameters and request PickPlace service
 def pr2_mover(object_list):
 
+    WORLD_NUM = 2 # Make sure to be consistent
+
     # Initialize variables
     labels = []
     centroids = [] # to be list of tuples (x,y,z)
     
     # ROS server message
     test_scene_num = Int32()
-    test_scene_num.data = 3
+    test_scene_num.data = WORLD_NUM
 
     object_name = String()
     arm_name = String()
@@ -227,6 +233,13 @@ def pr2_mover(object_list):
     # Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
     dropbox_param = rospy.get_param('/dropbox')
+    obj_loc = rospy.get_param('/object_locations')
+
+    obj_loc_names = []
+    for obj in obj_loc:
+        obj_loc_names.append(obj['name'])
+
+
     # left_box_pose = Pose(position = dropbox_param[0]['position'])
     left_box_pose = Pose()
     left_box_pose.position.x = dropbox_param[0]['position'][0]
@@ -259,11 +272,20 @@ def pr2_mover(object_list):
 
     # Loop through the pick list
     for obj in object_list_param:
-        try:
-            ind = labels.index(obj['name']) # get index into list of classified objects
-        except ValueError:
+        # Check if found any of desired object
+        indices = [i for i,x in enumerate(labels) if x == obj['name']]
+        if(len(indices)==0):
             rospy.loginfo("Couldn't find %s"%obj['name'])
             continue
+        # Multiple occurances
+        elif(len(indices) > 1):
+            # Take the one with the most points in the cloud
+            lens = [do.cloud.size for do in [object_list[i] for i in indices]]
+            ind = indices[np.argmax(lens)]
+            # rospy.loginfo("Multiple %s found, of cloud sizes ",lens)
+        else:
+            ind = indices[0]
+
 
         # Store object name
         object_name.data = obj['name']
@@ -272,6 +294,14 @@ def pr2_mover(object_list):
         pick_pose.position.x = centroids[ind][0]
         pick_pose.position.y = centroids[ind][1]
         pick_pose.position.z = centroids[ind][2]
+
+        ## Compare to ground truth
+        true_centroid = obj_loc[obj_loc_names.index(obj['name'])]['centroid'] # Assumes same ordering of objects in yaml files
+        cent_err = calc_centroid_err(centroids[ind], true_centroid)
+        rospy.loginfo("Centroid Error for %s (m): %.3f"%(obj['name'],cent_err))
+        if(cent_err > 0.20):
+            rospy.loginfo("  CENTROID ERROR")
+
 
         # Create 'place_pose' for the object
         # Assign the arm to be used for pick_place
@@ -302,7 +332,7 @@ def pr2_mover(object_list):
         #     print "Service call failed: %s"%e
 
     # Output your request parameters into output yaml file
-    yaml_filename = "output_{}.yaml".format(test_scene_num.data)
+    yaml_filename = "output_{}.yaml".format(WORLD_NUM)
     send_to_yaml(yaml_filename, dict_list)
     rospy.loginfo("Saved yaml output as %s"%yaml_filename)
 
