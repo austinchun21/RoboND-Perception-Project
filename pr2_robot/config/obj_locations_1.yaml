@@ -1,0 +1,7 @@
+object_locations:
+  - name: biscuits
+    centroid: [0.540, -0.240, 0.610]
+  - name: soap
+    centroid: [0.560, 0.00, 0.610]
+  - name: soap2
+    centroid: [0.460, 0.22, 0.612]

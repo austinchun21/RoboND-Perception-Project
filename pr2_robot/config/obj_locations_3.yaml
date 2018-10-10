@@ -1,0 +1,17 @@
+object_locations:
+  - name: sticky_notes
+    centroid: [0.450, 0.220, 0.610]
+  - name: book
+    centroid: [0.500, 0.080, 0.610]
+  - name: snacks
+    centroid: [0.418, -0.361, 0.610]
+  - name: biscuits
+    centroid: [0.590, -0.230, 0.610]
+  - name: eraser
+    centroid: [0.6, 0.265, 0.615]
+  - name: soap2
+    centroid: [0.460, -0.050, 0.612]
+  - name: soap
+    centroid: [0.680, 0.00, 0.610]
+  - name: glue
+    centroid: [0.620, 0.130 , 0.609]
