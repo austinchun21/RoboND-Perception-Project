@@ -222,12 +222,9 @@ def pr2_mover(object_list):
     # ROS server message
     test_scene_num = Int32()
     test_scene_num.data = WORLD_NUM
-
     object_name = String()
     arm_name = String()
     pick_pose = Pose() 
-    # place_pose = Pose()
-
     dict_list = []
 
     # Get/Read parameters
@@ -240,7 +237,6 @@ def pr2_mover(object_list):
         obj_loc_names.append(obj['name'])
 
 
-    # left_box_pose = Pose(position = dropbox_param[0]['position'])
     left_box_pose = Pose()
     left_box_pose.position.x = dropbox_param[0]['position'][0]
     left_box_pose.position.y = dropbox_param[0]['position'][1]
@@ -250,7 +246,6 @@ def pr2_mover(object_list):
     right_box_pose.position.x = dropbox_param[1]['position'][0]
     right_box_pose.position.y = dropbox_param[1]['position'][1]
     right_box_pose.position.z = dropbox_param[1]['position'][2]
-    # right_box_pose.position = dropbox_param[1][position]
 
     # TODO: Parse parameters into individual variables
     obj_names = []
@@ -286,7 +281,6 @@ def pr2_mover(object_list):
         else:
             ind = indices[0]
 
-
         # Store object name
         object_name.data = obj['name']
         
@@ -301,7 +295,6 @@ def pr2_mover(object_list):
         rospy.loginfo("Centroid Error for %s (m): %.3f"%(obj['name'],cent_err))
         if(cent_err > 0.20):
             rospy.loginfo("  CENTROID ERROR")
-
 
         # Create 'place_pose' for the object
         # Assign the arm to be used for pick_place
@@ -358,7 +351,8 @@ if __name__ == '__main__':
 
     # Load Model From disk
     # model = pickle.load(open('model.sav', 'rb'))
-    model = pickle.load(open('model_project_15shots_32bins_hsv.sav', 'rb'))
+    # model = pickle.load(open('model_project_15shots_32bins_hsv.sav', 'rb'))
+    model = pickle.load(open('model_project_100shots_16bins_hsv.sav', 'rb'))
     clf = model['classifier']
     encoder = LabelEncoder()
     encoder.classes_ = model['classes']
