@@ -1,7 +1,15 @@
 ## Project: Perception Pick & Place
-### Writeup Template: You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+### Austin Chun
+### Oct 2018
 
 ---
+[//]: # (Image References)
+[Input]: ./writeup_images/Input.png
+[Voxel]: ./writeup_images/Voxel.png
+[Passthrough]: ./writeup_images/Passthrough.png
+[Outlier]: ./writeup_images/Outlier.png
+[Table]: ./writeup_images/Table.png
+[Objects]: ./writeup_images/Objects.png
 
 
 # Required Steps for a Passing Submission:
@@ -15,15 +23,6 @@
 8. Submit a link to your GitHub repo for the project or the Python code for your perception pipeline and your output `.yaml` files (3 `.yaml` files, one for each test world).  You must have correctly identified 100% of objects from `pick_list_1.yaml` for `test1.world`, 80% of items from `pick_list_2.yaml` for `test2.world` and 75% of items from `pick_list_3.yaml` in `test3.world`.
 9. Congratulations!  Your Done!
 
-# Extra Challenges: Complete the Pick & Place
-7. To create a collision map, publish a point cloud to the `/pr2/3d_map/points` topic and make sure you change the `point_cloud_topic` to `/pr2/3d_map/points` in `sensors.yaml` in the `/pr2_robot/config/` directory. This topic is read by Moveit!, which uses this point cloud input to generate a collision map, allowing the robot to plan its trajectory.  Keep in mind that later when you go to pick up an object, you must first remove it from this point cloud so it is removed from the collision map!
-8. Rotate the robot to generate collision map of table sides. This can be accomplished by publishing joint angle value(in radians) to `/pr2/world_joint_controller/command`
-9. Rotate the robot back to its original state.
-10. Create a ROS Client for the “pick_place_routine” rosservice.  In the required steps above, you already created the messages you need to use this service. Checkout the [PickPlace.srv](https://github.com/udacity/RoboND-Perception-Project/tree/master/pr2_robot/srv) file to find out what arguments you must pass to this service.
-11. If everything was done correctly, when you pass the appropriate messages to the `pick_place_routine` service, the selected arm will perform pick and place operation and display trajectory in the RViz window
-12. Place all the objects from your pick list in their respective dropoff box and you have completed the challenge!
-13. Looking for a bigger challenge?  Load up the `challenge.world` scenario and see if you can get your perception pipeline working there!
-
 ## [Rubric](https://review.udacity.com/#!/rubrics/1067/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
@@ -36,6 +35,23 @@ You're reading it!
 
 ### Exercise 1, 2 and 3 pipeline implemented
 #### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
+As instructed in Exercise 1, the filtering pipeline is setup as follows:
+
+1. Read in Point Cloud (Convert from ROS to PCL)
+2. Voxel Grid Downsampling
+3. PassThrough Filter (used z and y)
+4. Outlier Removal Filter
+5. RANSAC Plane Segmentation
+
+For the Voxel Grid Downsampling (lines 60-68), I used a LEAF_SIZE = 0.005. I decided to use two passthrough filters (lines 70-88), one for Z as normal, but also one for y (left-right view from camera) to eliminate corners of the bins. Then the outlier removal filter (lines 90-100) gets rid of noise (looked at 25 neighbors, and threshold scale factor as 0.3). Lastly, RANSAC Plane Segmentation (lines 103-117) separates the table and the objects on the table.
+
+![Input][Input]
+![Voxel][Voxel]
+![Passthrough][Passthrough]
+![Outlier][Outlier]
+![Table][Table]
+![Objects][Objects]
+
 
 #### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
 
