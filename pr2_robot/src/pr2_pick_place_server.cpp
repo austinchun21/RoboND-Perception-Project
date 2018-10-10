@@ -433,7 +433,7 @@ bool PR2PickPlace::OperateRightGripper(const bool &close_gripper)
   right_gripper_group.setJointValueTarget(gripper_joint_positions);
   ros::Duration(1.5).sleep();
 
-  bool success = right_gripper_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+  bool success = static_cast<bool>(right_gripper_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   return success;
 }
 
@@ -465,7 +465,7 @@ bool PR2PickPlace::OperateLeftGripper(const bool &close_gripper)
   left_gripper_group.setJointValueTarget(gripper_joint_positions);
   ros::Duration(1.5).sleep();
 
-  bool success = left_gripper_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+  bool success = static_cast<bool>(left_gripper_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   return success;
 }
 
