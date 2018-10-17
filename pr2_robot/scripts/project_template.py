@@ -75,18 +75,18 @@ def pcl_callback(pcl_msg):
     # Assign axis and range to the passthrough filter object.
     filter_axis = 'z'
     passthroughz.set_filter_field_name(filter_axis)
-    axis_min = 0.605
-    axis_max = 0.9
-    passthroughz.set_filter_limits(axis_min, axis_max)
+    z_axis_min = 0.605
+    z_axis_max = 0.9
+    passthroughz.set_filter_limits(z_axis_min, z_axis_max)
     # Finally use the filter function to obtain the resultant point cloud. 
     cloud_filtered = passthroughz.filter()
 
     passthroughy = cloud_filtered.make_passthrough_filter()
     filter_axis = 'y'
     passthroughy.set_filter_field_name(filter_axis)
-    axis_min = -0.50
-    axis_max = 0.50
-    passthroughy.set_filter_limits(axis_min, axis_max)
+    y_axis_min = -0.50
+    y_axis_max = 0.50
+    passthroughy.set_filter_limits(y_axis_min, y_axis_max)
     cloud_filtered = passthroughy.filter()
   
     passthrough_cloud = cloud_filtered
@@ -218,8 +218,9 @@ def pcl_callback(pcl_msg):
 # function to load parameters and request PickPlace service
 def pr2_mover(object_list):
 
-    WORLD_NUM = 2 # Make sure to be consistent
-
+    # WORLD_NUM = 2 # Make sure to be consistent
+    WORLD_NUM = rospy.get_param('/test_scene_num')
+    
     # Initialize variables
     labels = []
     centroids = [] # to be list of tuples (x,y,z)
